@@ -1,41 +1,76 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, memo } from "react";
 import { TokenGroup } from "../hooks/usePumpPortal";
 
 interface TwitterEmbed {
   html: string;
   width?: number;
   height?: number;
+  error?: string;
 }
 
 interface ContentCardProps {
   group: TokenGroup;
 }
 
+// Create a memoized Twitter embed component to prevent unnecessary re-renders
+const TwitterEmbedContent = memo(function TwitterEmbedContent({
+  html,
+}: {
+  html: string;
+}) {
+  const embedRef = useRef<HTMLDivElement>(null);
+
+  // Load Twitter widget only once when this component mounts
+  useEffect(() => {
+    if (embedRef.current) {
+      // Load Twitter widgets script if needed
+      if (!window.twttr) {
+        const script = document.createElement("script");
+        script.src = "https://platform.twitter.com/widgets.js";
+        script.async = true;
+        script.onload = () => {
+          if (window.twttr && window.twttr.widgets) {
+            window.twttr.widgets.load(embedRef.current);
+          }
+        };
+        document.head.appendChild(script);
+      } else if (window.twttr && window.twttr.widgets) {
+        window.twttr.widgets.load(embedRef.current);
+      }
+    }
+  }, []); // Empty dependency array - only run once when mounted
+
+  return (
+    <div
+      ref={embedRef}
+      className="twitter-embed"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+});
+
 export function ContentCard({ group }: ContentCardProps) {
   const [twitterEmbed, setTwitterEmbed] = useState<TwitterEmbed | null>(null);
   const [isLoadingEmbed, setIsLoadingEmbed] = useState(false);
-  const embedRef = useRef<HTMLDivElement>(null);
+  const hasAttemptedLoad = useRef(false);
 
   useEffect(() => {
-    // Only fetch Twitter embed if it's a Twitter URL
+    // Only fetch Twitter embed if it's a Twitter URL and we haven't tried yet
     if (
+      !hasAttemptedLoad.current &&
       group.contentType === "twitter" &&
       (group.contentUrl.includes("twitter.com") ||
         group.contentUrl.includes("x.com"))
     ) {
       setIsLoadingEmbed(true);
+      hasAttemptedLoad.current = true;
 
       // Use our API route instead of calling Twitter directly
       fetch(`/api/twitter-embed?url=${encodeURIComponent(group.contentUrl)}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.error) {
-            console.error("Error from API:", data.error);
-            setIsLoadingEmbed(false);
-            return;
-          }
           setTwitterEmbed(data);
           setIsLoadingEmbed(false);
         })
@@ -46,33 +81,14 @@ export function ContentCard({ group }: ContentCardProps) {
     }
   }, [group.contentUrl, group.contentType]);
 
-  // Load Twitter widgets after the embed HTML is inserted
-  useEffect(() => {
-    if (twitterEmbed && embedRef.current) {
-      // Load the Twitter widgets script if it doesn't exist
-      if (!window.twttr) {
-        const script = document.createElement("script");
-        script.src = "https://platform.twitter.com/widgets.js";
-        script.async = true;
-        script.onload = () => {
-          // Process the current embed after script loads
-          if (window.twttr && window.twttr.widgets) {
-            window.twttr.widgets.load(embedRef.current);
-          }
-        };
-        document.head.appendChild(script);
-      } else if (window.twttr && window.twttr.widgets) {
-        // If script already loaded, just process the widgets
-        window.twttr.widgets.load(embedRef.current);
-      }
-    }
-  }, [twitterEmbed]);
-
   // Calculate total volume for all tokens
   const totalVolume = group.tokens.reduce(
     (sum, token) => sum + (token.volume || 0),
     0
   );
+
+  // Use a unique key for the TwitterEmbedContent component to prevent re-rendering
+  const tweetKey = `tweet-${group.contentUrl}`;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -85,11 +101,7 @@ export function ContentCard({ group }: ContentCardProps) {
         )}
 
         {twitterEmbed && !isLoadingEmbed && (
-          <div
-            ref={embedRef}
-            className="twitter-embed"
-            dangerouslySetInnerHTML={{ __html: twitterEmbed.html }}
-          />
+          <TwitterEmbedContent key={tweetKey} html={twitterEmbed.html} />
         )}
 
         {!twitterEmbed && !isLoadingEmbed && (
