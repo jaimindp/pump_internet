@@ -38,6 +38,7 @@ export function usePumpPortal() {
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectCountRef = useRef(0);
 
   const fetchMetadata = async (uri: string): Promise<TokenMetadata | null> => {
     try {
@@ -52,26 +53,61 @@ export function usePumpPortal() {
 
   const connect = useCallback(() => {
     try {
+      // Don't try to reconnect too many times
+      if (reconnectCountRef.current > 5) {
+        console.error("Too many reconnection attempts");
+        setError("Failed to connect after multiple attempts");
+        return;
+      }
+
+      console.log("Attempting to connect to PumpPortal...");
+
+      // Check if WebSocket is supported
+      if (typeof WebSocket === "undefined") {
+        console.error("WebSocket is not supported in this environment");
+        setError("WebSocket not supported");
+        return;
+      }
+
       const ws = new WebSocket("wss://pumpportal.fun/api/data");
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("Connected to PumpPortal");
+        console.log("Successfully connected to PumpPortal");
         setIsConnected(true);
         setError(null);
+        reconnectCountRef.current = 0; // Reset counter on successful connection
 
         // Subscribe to both new token and migration events
-        ws.send(JSON.stringify({ method: "subscribeNewToken" }));
-        ws.send(JSON.stringify({ method: "subscribeMigration" }));
+        const subscribeNewToken = JSON.stringify({
+          method: "subscribeNewToken",
+        });
+        const subscribeMigration = JSON.stringify({
+          method: "subscribeMigration",
+        });
+
+        console.log("Sending subscription requests:", {
+          subscribeNewToken,
+          subscribeMigration,
+        });
+
+        ws.send(subscribeNewToken);
+        ws.send(subscribeMigration);
       };
 
       ws.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("Received data:", data);
+          console.log("Received WebSocket message:", data);
 
           // Handle new token creation
           if (data.mint && data.name && data.symbol) {
+            console.log("Processing new token:", {
+              mint: data.mint,
+              name: data.name,
+              symbol: data.symbol,
+            });
+
             const tokenData: TokenData = {
               mint: data.mint,
               name: data.name,
@@ -84,17 +120,23 @@ export function usePumpPortal() {
 
             // Fetch metadata if URI is available
             if (data.uri) {
+              console.log("Fetching metadata from:", data.uri);
               const metadata = await fetchMetadata(data.uri);
               if (metadata) {
+                console.log("Metadata fetched successfully:", metadata);
                 tokenData.metadata = metadata;
               }
             }
 
-            setNewTokens((prev) => [tokenData, ...prev].slice(0, 100)); // Keep last 100 tokens
+            setNewTokens((prev) => {
+              console.log("Updating tokens list, current count:", prev.length);
+              return [tokenData, ...prev].slice(0, 100);
+            });
           }
 
           // Handle migration events
           if (data.type === "migration" && data.mint) {
+            console.log("Processing migration event for:", data.mint);
             setNewTokens((prev) =>
               prev.map((token) => {
                 if (token.mint === data.mint) {
@@ -109,7 +151,12 @@ export function usePumpPortal() {
             );
           }
         } catch (error) {
-          console.error("Error parsing message:", error);
+          console.error(
+            "Error processing WebSocket message:",
+            error,
+            "Raw message:",
+            event.data
+          );
         }
       };
 
@@ -118,20 +165,29 @@ export function usePumpPortal() {
         setError("Connection error occurred");
       };
 
-      ws.onclose = () => {
-        console.log("Disconnected from PumpPortal");
+      ws.onclose = (event) => {
+        console.log("WebSocket closed:", event.code, event.reason);
         setIsConnected(false);
         wsRef.current = null;
 
+        // Increment reconnection counter
+        reconnectCountRef.current += 1;
+
         // Attempt to reconnect after 5 seconds
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log("Attempting to reconnect...");
+          console.log(
+            `Attempting to reconnect (attempt ${reconnectCountRef.current})...`
+          );
           connect();
         }, 5000);
       };
     } catch (error) {
-      console.error("Error connecting to PumpPortal:", error);
-      setError("Failed to connect to PumpPortal");
+      console.error("Error in connect function:", error);
+      setError(
+        `Failed to connect: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }, []);
 
@@ -139,6 +195,7 @@ export function usePumpPortal() {
     connect();
 
     return () => {
+      console.log("Cleaning up WebSocket connection");
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
