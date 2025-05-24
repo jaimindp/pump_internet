@@ -48,6 +48,41 @@ export function ContentCard({ group }: ContentCardProps) {
     0
   );
 
+  // Format the display URL for better readability
+  const getDisplayUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      // For Twitter/X URLs, show a cleaner format
+      if (
+        urlObj.hostname.includes("twitter.com") ||
+        urlObj.hostname.includes("x.com")
+      ) {
+        const pathParts = urlObj.pathname.split("/").filter(Boolean);
+        if (pathParts.length > 0) {
+          // Show @username for profile URLs
+          if (pathParts.length === 1) {
+            return `@${pathParts[0]}`;
+          }
+          // Show @username/status/id for tweets
+          if (pathParts.includes("status")) {
+            return `@${pathParts[0]}/status/${
+              pathParts[pathParts.indexOf("status") + 1]
+            }`;
+          }
+          // Show community name for communities
+          if (pathParts.includes("communities")) {
+            return `Community: ${
+              pathParts[pathParts.indexOf("communities") + 1]
+            }`;
+          }
+        }
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       {/* Content Display */}
@@ -81,9 +116,9 @@ export function ContentCard({ group }: ContentCardProps) {
               href={group.contentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 break-all"
+              className="text-blue-600 hover:text-blue-800 break-all font-medium"
             >
-              {group.contentUrl}
+              {getDisplayUrl(group.contentUrl)}
             </a>
           </div>
         )}

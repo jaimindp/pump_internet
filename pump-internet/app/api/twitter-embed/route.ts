@@ -12,6 +12,22 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Check if this is an embeddable tweet URL
+    const isEmbeddableTweet =
+      (url.includes("twitter.com/") || url.includes("x.com/")) &&
+      url.includes("/status/") &&
+      !url.includes("/communities/") &&
+      !url.includes("/search") &&
+      !url.includes("/intent/");
+
+    if (!isEmbeddableTweet) {
+      // Return empty response for non-embeddable URLs
+      return NextResponse.json({
+        html: null,
+        error: "URL is not an embeddable tweet",
+      });
+    }
+
     const response = await fetch(
       `https://publish.twitter.com/oembed?url=${encodeURIComponent(
         url
@@ -24,7 +40,14 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error(`Twitter API responded with status: ${response.status}`);
+      // Don't throw, just return null html
+      console.log(
+        `Twitter oEmbed returned status ${response.status} for URL: ${url}`
+      );
+      return NextResponse.json({
+        html: null,
+        error: `Twitter API returned status ${response.status}`,
+      });
     }
 
     const data = await response.json();
@@ -32,8 +55,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching Twitter embed:", error);
     return NextResponse.json(
-      { error: "Failed to fetch Twitter embed" },
-      { status: 500 }
+      { html: null, error: "Failed to fetch Twitter embed" },
+      { status: 200 } // Return 200 to avoid client-side errors
     );
   }
 }
