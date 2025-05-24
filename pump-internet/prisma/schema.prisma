@@ -9,7 +9,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
 }
 
 datasource db {
@@ -39,4 +38,6 @@ model ContentLink {
   token     Token    @relation(fields: [tokenId], references: [id])
   tokenId   String
   createdAt DateTime @default(now())
+
+  @@unique([url, tokenId])
 }
