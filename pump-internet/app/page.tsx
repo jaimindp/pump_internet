@@ -4,9 +4,11 @@ import { useState } from "react";
 import { usePumpPortal } from "./hooks/usePumpPortal";
 import { ContentCard } from "./components/ContentCard";
 
+type TabType = "new" | "trending" | "migrations";
+
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"new" | "trending">("new");
-  const { isConnected, groupedTokens, error } = usePumpPortal();
+  const [activeTab, setActiveTab] = useState<TabType>("new");
+  const { isConnected, groupedTokens, migratedGroups, error } = usePumpPortal();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -36,6 +38,16 @@ export default function Home() {
                 }`}
               >
                 New
+              </button>
+              <button
+                onClick={() => setActiveTab("migrations")}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  activeTab === "migrations"
+                    ? "bg-black text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Migrations
               </button>
               <button
                 onClick={() => setActiveTab("trending")}
@@ -88,6 +100,35 @@ export default function Home() {
               {isConnected && groupedTokens.length > 0 && (
                 <div className="space-y-6">
                   {groupedTokens.map((group, index) => (
+                    <ContentCard
+                      key={`${group.contentUrl}-${index}`}
+                      group={group}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : activeTab === "migrations" ? (
+            <>
+              {!isConnected && !error && (
+                <div className="text-center py-20 text-gray-500">
+                  <p>Connecting to Pump Fun data...</p>
+                  <p className="text-sm mt-2">Migrations will appear here</p>
+                </div>
+              )}
+
+              {isConnected && migratedGroups.length === 0 && (
+                <div className="text-center py-20 text-gray-500">
+                  <p>No migrations yet</p>
+                  <p className="text-sm mt-2">
+                    Tokens that complete their bonding curve will appear here
+                  </p>
+                </div>
+              )}
+
+              {isConnected && migratedGroups.length > 0 && (
+                <div className="space-y-6">
+                  {migratedGroups.map((group, index) => (
                     <ContentCard
                       key={`${group.contentUrl}-${index}`}
                       group={group}

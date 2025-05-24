@@ -21,12 +21,15 @@ export interface TokenData {
   metadata?: TokenMetadata;
   timestamp: number;
   volume?: number;
+  migrated?: boolean;
+  migrationTimestamp?: number;
 }
 
 export interface TokenGroup {
   contentUrl: string;
   contentType: "twitter" | "telegram" | "website" | "unknown";
   tokens: TokenData[];
+  latestMigration?: number; // timestamp of most recent migration in group
 }
 
 export function usePumpPortal() {
@@ -57,12 +60,9 @@ export function usePumpPortal() {
         setIsConnected(true);
         setError(null);
 
-        // Subscribe to new token events
-        ws.send(
-          JSON.stringify({
-            method: "subscribeNewToken",
-          })
-        );
+        // Subscribe to both new token and migration events
+        ws.send(JSON.stringify({ method: "subscribeNewToken" }));
+        ws.send(JSON.stringify({ method: "subscribeMigration" }));
       };
 
       ws.onmessage = async (event) => {
@@ -79,6 +79,7 @@ export function usePumpPortal() {
               uri: data.uri,
               timestamp: Date.now(),
               volume: data.initialBuy || 0,
+              migrated: false,
             };
 
             // Fetch metadata if URI is available
@@ -90,6 +91,22 @@ export function usePumpPortal() {
             }
 
             setNewTokens((prev) => [tokenData, ...prev].slice(0, 100)); // Keep last 100 tokens
+          }
+
+          // Handle migration events
+          if (data.type === "migration" && data.mint) {
+            setNewTokens((prev) =>
+              prev.map((token) => {
+                if (token.mint === data.mint) {
+                  return {
+                    ...token,
+                    migrated: true,
+                    migrationTimestamp: Date.now(),
+                  };
+                }
+                return token;
+              })
+            );
           }
         } catch (error) {
           console.error("Error parsing message:", error);
@@ -159,18 +176,32 @@ export function usePumpPortal() {
           const existing = groups.get(contentUrl);
           if (existing) {
             existing.tokens.push(token);
+            // Update latest migration timestamp if this token is migrated
+            if (token.migrated && token.migrationTimestamp) {
+              existing.latestMigration = Math.max(
+                existing.latestMigration || 0,
+                token.migrationTimestamp
+              );
+            }
           } else {
             groups.set(contentUrl, {
               contentUrl,
               contentType,
               tokens: [token],
+              latestMigration: token.migrated
+                ? token.migrationTimestamp
+                : undefined,
             });
           }
         }
       });
 
       return Array.from(groups.values()).sort((a, b) => {
-        // Sort by most recent token in each group
+        // For migrations tab, sort by migration timestamp
+        if (a.latestMigration && b.latestMigration) {
+          return b.latestMigration - a.latestMigration;
+        }
+        // For other tabs, sort by most recent token
         const aLatest = Math.max(...a.tokens.map((t) => t.timestamp));
         const bLatest = Math.max(...b.tokens.map((t) => t.timestamp));
         return bLatest - aLatest;
@@ -179,10 +210,18 @@ export function usePumpPortal() {
     []
   );
 
+  // Get only migrated tokens
+  const migratedGroups = useCallback(() => {
+    return groupTokensByContent(newTokens).filter((group) =>
+      group.tokens.some((token) => token.migrated)
+    );
+  }, [newTokens, groupTokensByContent]);
+
   return {
     isConnected,
     newTokens,
     error,
     groupedTokens: groupTokensByContent(newTokens),
+    migratedGroups: migratedGroups(),
   };
 }
