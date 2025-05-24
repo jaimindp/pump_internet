@@ -20,24 +20,19 @@ export function ContentCard({ group }: ContentCardProps) {
   useEffect(() => {
     // Only fetch Twitter embed if it's a Twitter URL
     if (
-      (group.contentType === "twitter" &&
-        group.contentUrl.includes("twitter.com")) ||
-      group.contentUrl.includes("x.com")
+      group.contentType === "twitter" &&
+      (group.contentUrl.includes("twitter.com") ||
+        group.contentUrl.includes("x.com"))
     ) {
       setIsLoadingEmbed(true);
 
-      // Extract tweet ID from URL
-      const tweetUrl = group.contentUrl;
-
-      // Fetch Twitter oEmbed
-      fetch(
-        `https://publish.twitter.com/oembed?url=${encodeURIComponent(
-          tweetUrl
-        )}&omit_script=true`
-      )
+      // Use our API route to avoid CORS issues
+      fetch(`/api/twitter-embed?url=${encodeURIComponent(group.contentUrl)}`)
         .then((res) => res.json())
         .then((data) => {
-          setTwitterEmbed(data);
+          if (data.html) {
+            setTwitterEmbed(data);
+          }
           setIsLoadingEmbed(false);
         })
         .catch((err) => {
