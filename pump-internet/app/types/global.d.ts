@@ -1,7 +1,7 @@
 interface Window {
   twttr?: {
     widgets: {
-      load: () => void;
+      load: (element?: HTMLElement | null) => void;
     };
   };
 }

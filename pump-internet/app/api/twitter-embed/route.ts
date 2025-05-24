@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const url = searchParams.get("url");
+  const url = request.nextUrl.searchParams.get("url");
 
   if (!url) {
     return NextResponse.json(
@@ -12,51 +11,23 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Check if this is an embeddable tweet URL
-    const isEmbeddableTweet =
-      (url.includes("twitter.com/") || url.includes("x.com/")) &&
-      url.includes("/status/") &&
-      !url.includes("/communities/") &&
-      !url.includes("/search") &&
-      !url.includes("/intent/");
-
-    if (!isEmbeddableTweet) {
-      // Return empty response for non-embeddable URLs
-      return NextResponse.json({
-        html: null,
-        error: "URL is not an embeddable tweet",
-      });
-    }
-
-    const response = await fetch(
+    const twitterResponse = await fetch(
       `https://publish.twitter.com/oembed?url=${encodeURIComponent(
         url
-      )}&omit_script=true`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; PumpInternet/1.0)",
-        },
-      }
+      )}&omit_script=true`
     );
 
-    if (!response.ok) {
-      // Don't throw, just return null html
-      console.log(
-        `Twitter oEmbed returned status ${response.status} for URL: ${url}`
-      );
-      return NextResponse.json({
-        html: null,
-        error: `Twitter API returned status ${response.status}`,
-      });
+    if (!twitterResponse.ok) {
+      throw new Error(`Twitter API responded with ${twitterResponse.status}`);
     }
 
-    const data = await response.json();
+    const data = await twitterResponse.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching Twitter embed:", error);
     return NextResponse.json(
-      { html: null, error: "Failed to fetch Twitter embed" },
-      { status: 200 } // Return 200 to avoid client-side errors
+      { error: "Failed to fetch Twitter embed" },
+      { status: 500 }
     );
   }
 }

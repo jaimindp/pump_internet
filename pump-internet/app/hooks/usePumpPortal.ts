@@ -38,18 +38,11 @@ export function usePumpPortal() {
 
   const fetchMetadata = async (uri: string): Promise<TokenMetadata | null> => {
     try {
-      // Handle IPFS URLs
-      let metadataUrl = uri;
-      if (uri.startsWith("ipfs://")) {
-        // Convert ipfs:// to https gateway
-        metadataUrl = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
-      }
-
-      const response = await fetch(metadataUrl);
+      const response = await fetch(uri);
       if (!response.ok) return null;
       return await response.json();
     } catch (error) {
-      console.error("Error fetching metadata from:", uri, error);
+      console.error("Error fetching metadata:", error);
       return null;
     }
   };
@@ -93,7 +86,6 @@ export function usePumpPortal() {
               const metadata = await fetchMetadata(data.uri);
               if (metadata) {
                 tokenData.metadata = metadata;
-                console.log("Fetched metadata:", metadata);
               }
             }
 

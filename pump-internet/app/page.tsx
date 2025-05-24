@@ -1,31 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePumpPortal } from "./hooks/usePumpPortal";
 import { ContentCard } from "./components/ContentCard";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"new" | "trending">("new");
   const { isConnected, groupedTokens, error } = usePumpPortal();
-
-  // Add Twitter widget script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://platform.twitter.com/widgets.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
-  // Re-render Twitter widgets when new content is added
-  useEffect(() => {
-    if (window.twttr && window.twttr.widgets) {
-      window.twttr.widgets.load();
-    }
-  }, [groupedTokens]);
 
   return (
     <div className="min-h-screen bg-gray-50">

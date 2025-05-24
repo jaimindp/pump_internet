@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { TokenGroup } from "../hooks/usePumpPortal";
 
 interface TwitterEmbed {
@@ -16,6 +16,7 @@ interface ContentCardProps {
 export function ContentCard({ group }: ContentCardProps) {
   const [twitterEmbed, setTwitterEmbed] = useState<TwitterEmbed | null>(null);
   const [isLoadingEmbed, setIsLoadingEmbed] = useState(false);
+  const embedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Only fetch Twitter embed if it's a Twitter URL
@@ -26,13 +27,16 @@ export function ContentCard({ group }: ContentCardProps) {
     ) {
       setIsLoadingEmbed(true);
 
-      // Use our API route to avoid CORS issues
+      // Use our API route instead of calling Twitter directly
       fetch(`/api/twitter-embed?url=${encodeURIComponent(group.contentUrl)}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.html) {
-            setTwitterEmbed(data);
+          if (data.error) {
+            console.error("Error from API:", data.error);
+            setIsLoadingEmbed(false);
+            return;
           }
+          setTwitterEmbed(data);
           setIsLoadingEmbed(false);
         })
         .catch((err) => {
@@ -42,46 +46,33 @@ export function ContentCard({ group }: ContentCardProps) {
     }
   }, [group.contentUrl, group.contentType]);
 
+  // Load Twitter widgets after the embed HTML is inserted
+  useEffect(() => {
+    if (twitterEmbed && embedRef.current) {
+      // Load the Twitter widgets script if it doesn't exist
+      if (!window.twttr) {
+        const script = document.createElement("script");
+        script.src = "https://platform.twitter.com/widgets.js";
+        script.async = true;
+        script.onload = () => {
+          // Process the current embed after script loads
+          if (window.twttr && window.twttr.widgets) {
+            window.twttr.widgets.load(embedRef.current);
+          }
+        };
+        document.head.appendChild(script);
+      } else if (window.twttr && window.twttr.widgets) {
+        // If script already loaded, just process the widgets
+        window.twttr.widgets.load(embedRef.current);
+      }
+    }
+  }, [twitterEmbed]);
+
   // Calculate total volume for all tokens
   const totalVolume = group.tokens.reduce(
     (sum, token) => sum + (token.volume || 0),
     0
   );
-
-  // Format the display URL for better readability
-  const getDisplayUrl = (url: string) => {
-    try {
-      const urlObj = new URL(url);
-      // For Twitter/X URLs, show a cleaner format
-      if (
-        urlObj.hostname.includes("twitter.com") ||
-        urlObj.hostname.includes("x.com")
-      ) {
-        const pathParts = urlObj.pathname.split("/").filter(Boolean);
-        if (pathParts.length > 0) {
-          // Show @username for profile URLs
-          if (pathParts.length === 1) {
-            return `@${pathParts[0]}`;
-          }
-          // Show @username/status/id for tweets
-          if (pathParts.includes("status")) {
-            return `@${pathParts[0]}/status/${
-              pathParts[pathParts.indexOf("status") + 1]
-            }`;
-          }
-          // Show community name for communities
-          if (pathParts.includes("communities")) {
-            return `Community: ${
-              pathParts[pathParts.indexOf("communities") + 1]
-            }`;
-          }
-        }
-      }
-      return url;
-    } catch {
-      return url;
-    }
-  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -95,6 +86,7 @@ export function ContentCard({ group }: ContentCardProps) {
 
         {twitterEmbed && !isLoadingEmbed && (
           <div
+            ref={embedRef}
             className="twitter-embed"
             dangerouslySetInnerHTML={{ __html: twitterEmbed.html }}
           />
@@ -116,9 +108,9 @@ export function ContentCard({ group }: ContentCardProps) {
               href={group.contentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 break-all font-medium"
+              className="text-blue-600 hover:text-blue-800 break-all"
             >
-              {getDisplayUrl(group.contentUrl)}
+              {group.contentUrl}
             </a>
           </div>
         )}
