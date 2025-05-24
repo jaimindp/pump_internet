@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// This is the Prisma schema file for Pump Internet
+// It defines tokens, content links, and migrations
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Token {
+  id           String   @id @default(cuid())
+  mint         String   @unique
+  name         String
+  symbol       String
+  uri          String?
+  image        String?
+  description  String?
+  createdAt    DateTime @default(now())
+  volume       Float?   // in USD or SOL
+  migrated     Boolean  @default(false)
+  migrationAt  DateTime?
+  contentLinks ContentLink[]
+}
+
+model ContentLink {
+  id        String   @id @default(cuid())
+  url       String
+  type      String   // twitter, website, telegram, etc.
+  token     Token    @relation(fields: [tokenId], references: [id])
+  tokenId   String
+  createdAt DateTime @default(now())
+}
