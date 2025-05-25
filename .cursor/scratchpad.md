@@ -1,3 +1,69 @@
+# Pump Internet - Scratchpad
+
+## 🚨 IMPORTANT: Directory Structure
+
+**ALWAYS `cd pump-internet` first before running any npm commands!**
+
+The project structure is:
+
+```
+pump_internet/                    # ← Git root
+├── .cursor/
+├── .git/
+└── pump-internet/               # ← Actual Next.js project
+    ├── app/
+    ├── package.json
+    ├── .env
+    └── node_modules/
+```
+
+**Commands must be run from `/pump-internet/` subdirectory:**
+
+```bash
+cd pump-internet
+npm run dev
+npm run build
+npx prisma studio
+```
+
+## Project Overview
+
+Real-time dashboard for tracking Solana tokens launched on Pump.fun, grouped by associated content (Twitter, YouTube, TikTok, Instagram, etc.).
+
+## Current Status ✅
+
+- **Database**: PostgreSQL with Prisma ORM (connected & working)
+- **WebSocket**: PumpPortal connection working (tested with Node.js & browser)
+- **Content Embeds**: Support for Twitter, YouTube, TikTok, Instagram
+- **Build**: Production build working
+- **API Routes**: Token storage and retrieval working
+- **Pause/Resume**: Live updates can be paused/resumed with pending count
+- **Multi-platform**: Detecting and embedding content from multiple platforms
+
+## Current Issue 🔍
+
+**RESOLVED**: WebSocket is working perfectly in browser! Live data is flowing and being saved to database.
+
+## Next Steps
+
+1. Fix WebSocket connection in browser
+2. Test database persistence with live data
+3. Verify content embeds work for all platforms
+4. Add pause/resume functionality
+5. Consider adding volume-based sorting for trending
+6. Add search/filtering capabilities
+7. Optimize performance for high-volume periods
+
+## Development Commands
+
+```bash
+cd pump-internet                 # ← ALWAYS DO THIS FIRST!
+npm run dev                     # Start development server
+npm run build                   # Production build
+node scripts/check-db.js        # Check database contents
+npx prisma studio              # Visual database interface
+```
+
 # Pump Fun Content Discovery Platform
 
 ## Background and Motivation

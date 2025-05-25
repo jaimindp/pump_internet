@@ -1,7 +1,16 @@
-interface Window {
-  twttr?: {
-    widgets: {
-      load: (element?: HTMLElement | null) => void;
+declare global {
+  interface Window {
+    twttr?: {
+      widgets: {
+        load: (element?: HTMLElement) => void;
+      };
     };
-  };
+    instgrm?: {
+      Embeds: {
+        process: () => void;
+      };
+    };
+  }
 }
+
+export {};
