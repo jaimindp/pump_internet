@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pump Internet - Discover Content Through Token Launches",
+  title: "Retarded Internet - The Most Unhinged Content Portal",
   description:
-    "Track Pump Fun token launches and discover the content that's grabbing attention through financial signals",
+    "Track the most unhinged, viral, and degenerate content launches on the internet. X, YouTube, and more, all in one place.",
 };
 
 export default function RootLayout({

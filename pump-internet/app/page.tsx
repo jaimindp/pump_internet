@@ -43,10 +43,10 @@ export default function Home() {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">🚀</span>
+                  <span className="text-white font-bold text-lg">🤡</span>
                 </div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Pump Internet
+                  Retarded Internet
                 </h1>
               </div>
               {isConnected && (
@@ -134,9 +134,7 @@ export default function Home() {
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <span className="text-white text-lg">🐦</span>
                 </div>
-                <h2 className="text-xl font-bold text-white">
-                  Embedded Tweets
-                </h2>
+                <h2 className="text-xl font-bold text-white">X</h2>
                 <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full">
                   <span className="text-blue-400 text-sm font-medium">
                     {embeddedTweets.length}
@@ -171,10 +169,10 @@ export default function Home() {
                     <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   </div>
                   <p className="text-gray-300 font-medium">
-                    Connecting to Pump Fun data...
+                    Connecting to Retarded Internet data...
                   </p>
                   <p className="text-gray-500 text-sm mt-2">
-                    Tweet embeds will appear here
+                    X posts will appear here
                   </p>
                 </div>
               )}
@@ -184,11 +182,9 @@ export default function Home() {
                   <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl">🐦</span>
                   </div>
-                  <p className="text-gray-300 font-medium">
-                    No embedded tweets yet
-                  </p>
+                  <p className="text-gray-300 font-medium">No X posts yet</p>
                   <p className="text-gray-500 text-sm mt-2">
-                    Tweet embeds will appear here as tokens are created
+                    X posts will appear here as tokens are created
                   </p>
                 </div>
               )}
