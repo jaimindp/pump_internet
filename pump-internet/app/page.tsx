@@ -35,21 +35,35 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="bg-gray-900/80 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">Pump Internet</h1>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">🚀</span>
+                </div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  Pump Internet
+                </h1>
+              </div>
               {isConnected && (
-                <span className="flex items-center gap-1 text-sm text-green-600">
-                  <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
-                  Connected
-                </span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-full">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-green-400 text-sm font-medium">
+                    Connected
+                  </span>
+                </div>
               )}
               {!isConnected && error && (
-                <span className="text-sm text-red-600">Disconnected</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-red-500/20 border border-red-500/30 rounded-full">
+                  <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                  <span className="text-red-400 text-sm font-medium">
+                    Disconnected
+                  </span>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-4">
@@ -57,10 +71,10 @@ export default function Home() {
               {isConnected && (
                 <button
                   onClick={togglePause}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
                     isPaused
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25"
+                      : "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/25"
                   }`}
                 >
                   {isPaused ? (
@@ -104,52 +118,81 @@ export default function Home() {
       {/* Main Content - Three Columns */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {isLoading ? (
-          <div className="text-center py-20 text-gray-500">
-            <p>Loading tokens...</p>
+          <div className="text-center py-20">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl">
+              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-gray-300 font-medium">
+                Loading tokens...
+              </span>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Embedded Tweets Column */}
-            <section>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                🐦 Embedded Tweets
-                <span className="text-sm font-normal text-gray-500">
-                  ({embeddedTweets.length})
-                </span>
-              </h2>
+            <section className="space-y-6">
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl backdrop-blur-sm">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg">🐦</span>
+                </div>
+                <h2 className="text-xl font-bold text-white">
+                  Embedded Tweets
+                </h2>
+                <div className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full">
+                  <span className="text-blue-400 text-sm font-medium">
+                    {embeddedTweets.length}
+                  </span>
+                </div>
+              </div>
+
               {error && (
-                <div className="text-center py-8">
-                  <p className="text-red-600 mb-2">Connection Error</p>
-                  <p className="text-sm text-gray-500">{error}</p>
-                  <p className="text-sm text-gray-500 mt-2">
+                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm">
+                  <p className="text-red-400 font-medium mb-2">
+                    Connection Error
+                  </p>
+                  <p className="text-gray-400 text-sm">{error}</p>
+                  <p className="text-gray-400 text-sm mt-2">
                     Attempting to reconnect...
                   </p>
                 </div>
               )}
+
               {isPaused && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center mb-4">
-                  <p className="text-blue-800">
-                    Updates paused • New tokens will not appear until resumed
-                  </p>
-                  <p className="text-sm text-blue-600 mt-1">
-                    Click &quot;Resume&quot; to continue receiving live updates
+                <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl backdrop-blur-sm">
+                  <p className="text-blue-400 font-medium">Updates paused</p>
+                  <p className="text-gray-400 text-sm mt-1">
+                    New tokens will not appear until resumed
                   </p>
                 </div>
               )}
+
               {!isConnected && !error && (
-                <div className="text-center py-20 text-gray-500">
-                  <p>Connecting to Pump Fun data...</p>
-                  <p className="text-sm mt-2">Tweet embeds will appear here</p>
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-gray-300 font-medium">
+                    Connecting to Pump Fun data...
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Tweet embeds will appear here
+                  </p>
                 </div>
               )}
+
               {isConnected && embeddedTweets.length === 0 && !isPaused && (
-                <div className="text-center py-20 text-gray-500">
-                  <p>No embedded tweets yet</p>
-                  <p className="text-sm mt-2">
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">🐦</span>
+                  </div>
+                  <p className="text-gray-300 font-medium">
+                    No embedded tweets yet
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
                     Tweet embeds will appear here as tokens are created
                   </p>
                 </div>
               )}
+
               {isConnected && embeddedTweets.length > 0 && (
                 <div className="space-y-6">
                   {embeddedTweets.map((group) => (
@@ -164,17 +207,28 @@ export default function Home() {
             </section>
 
             {/* YouTube Column */}
-            <section>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                📺 YouTube
-                <span className="text-sm font-normal text-gray-500">
-                  ({youtubeVideos.length})
-                </span>
-              </h2>
+            <section className="space-y-6">
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-500/10 to-pink-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm">
+                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg">📺</span>
+                </div>
+                <h2 className="text-xl font-bold text-white">YouTube</h2>
+                <div className="px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full">
+                  <span className="text-red-400 text-sm font-medium">
+                    {youtubeVideos.length}
+                  </span>
+                </div>
+              </div>
+
               {youtubeVideos.length === 0 ? (
-                <div className="text-center py-20 text-gray-500">
-                  <p>No YouTube videos yet</p>
-                  <p className="text-sm mt-2">
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">📺</span>
+                  </div>
+                  <p className="text-gray-300 font-medium">
+                    No YouTube videos yet
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
                     YouTube videos will appear here as tokens are created
                   </p>
                 </div>
@@ -192,17 +246,28 @@ export default function Home() {
             </section>
 
             {/* Other Content Column */}
-            <section>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                🔗 Other
-                <span className="text-sm font-normal text-gray-500">
-                  ({otherContent.length})
-                </span>
-              </h2>
+            <section className="space-y-6">
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl backdrop-blur-sm">
+                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg">🔗</span>
+                </div>
+                <h2 className="text-xl font-bold text-white">Other</h2>
+                <div className="px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
+                  <span className="text-green-400 text-sm font-medium">
+                    {otherContent.length}
+                  </span>
+                </div>
+              </div>
+
               {otherContent.length === 0 ? (
-                <div className="text-center py-20 text-gray-500">
-                  <p>No other content yet</p>
-                  <p className="text-sm mt-2">
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">🔗</span>
+                  </div>
+                  <p className="text-gray-300 font-medium">
+                    No other content yet
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
                     Other content will appear here as tokens are created
                   </p>
                 </div>

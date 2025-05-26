@@ -259,18 +259,32 @@ const EmbedContent = memo(function EmbedContent({
 
   if (embed.type === "twitter" && timedOut) {
     return (
-      <div className="twitter-embed-fallback bg-gray-100 p-4 rounded text-center">
-        <p className="text-gray-500">
-          Could not load tweet.{" "}
-          <a
-            href={contentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
+      <div className="bg-gray-700/30 border border-gray-600/50 p-6 rounded-xl text-center backdrop-blur-sm">
+        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-white text-xl">🐦</span>
+        </div>
+        <p className="text-gray-300 mb-3 font-medium">Could not load tweet</p>
+        <a
+          href={contentUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/30 transition-all duration-200 text-sm font-medium"
+        >
+          <span>View on Twitter</span>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            View on Twitter
-          </a>
-        </p>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+          </svg>
+        </a>
       </div>
     );
   }
@@ -445,12 +459,14 @@ const ContentCardComponent = function ContentCard({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden hover:border-gray-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-black/20">
       {/* Content Display */}
       <div className="p-6">
         {isLoadingEmbed && (
           <div className="animate-pulse">
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-700/50 rounded-lg flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
           </div>
         )}
 
@@ -463,20 +479,23 @@ const ContentCardComponent = function ContentCard({
         )}
 
         {!contentEmbed && !isLoadingEmbed && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-500">
-              {getContentIcon(contentInfo.type)} Content Link
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">
+                {getContentIcon(contentInfo.type)}
+              </span>
+              <span className="text-gray-300 font-medium">Content Link</span>
               {contentInfo.isEmbeddable && (
-                <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                <span className="px-2 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs text-blue-400 font-medium">
                   {contentInfo.type}
                 </span>
               )}
-            </p>
+            </div>
             <a
               href={group.contentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 break-all"
+              className="block text-blue-400 hover:text-blue-300 break-all text-sm transition-colors duration-200 hover:underline"
             >
               {group.contentUrl}
             </a>
@@ -485,40 +504,61 @@ const ContentCardComponent = function ContentCard({
       </div>
 
       {/* Associated Tokens */}
-      <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
-        <p className="text-sm text-gray-600 mb-3">
-          Associated tokens: {group.tokens.length}
-        </p>
-        <div className="space-y-2">
-          {group.tokens.map((token) => (
+      <div className="border-t border-gray-700/50 px-6 py-4 bg-gray-900/30">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+            <p className="text-gray-300 font-medium text-sm">
+              {group.tokens.length} token{group.tokens.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          {totalVolume > 0 && (
+            <div className="text-right">
+              <p className="text-green-400 font-bold text-sm">
+                ${(totalVolume / 1e9).toFixed(2)}M
+              </p>
+              <p className="text-gray-500 text-xs">Total Volume</p>
+            </div>
+          )}
+        </div>
+
+        {/* Compact token grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {group.tokens.slice(0, 4).map((token) => (
             <div
               key={token.mint}
-              className="flex items-center justify-between text-sm"
+              className="flex items-center gap-2 p-2 bg-gray-800/30 rounded-lg border border-gray-700/30 hover:border-gray-600/50 transition-colors duration-200"
             >
-              <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">$</span>
+              </div>
+              <div className="min-w-0 flex-1">
                 <a
                   href={`https://pump.fun/${token.mint}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-gray-900 hover:text-blue-600"
+                  className="font-medium text-white hover:text-blue-400 transition-colors duration-200 text-sm truncate block"
+                  title={`${token.symbol} - ${token.name}`}
                 >
                   ${token.symbol}
                 </a>
-                <span className="text-gray-500">{token.name}</span>
+                {token.volume && token.volume > 0 && (
+                  <p className="text-green-400 text-xs">
+                    ${(token.volume / 1e9).toFixed(1)}M
+                  </p>
+                )}
               </div>
-              {token.volume && token.volume > 0 && (
-                <span className="text-gray-600">
-                  ${(token.volume / 1e9).toFixed(2)}M
-                </span>
-              )}
             </div>
           ))}
         </div>
-        {totalVolume > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <p className="text-sm font-medium text-gray-900">
-              Total Volume: ${(totalVolume / 1e9).toFixed(2)}M
-            </p>
+
+        {/* Show more indicator if there are more than 4 tokens */}
+        {group.tokens.length > 4 && (
+          <div className="mt-2 text-center">
+            <span className="text-gray-400 text-xs">
+              +{group.tokens.length - 4} more token
+              {group.tokens.length - 4 !== 1 ? "s" : ""}
+            </span>
           </div>
         )}
       </div>
