@@ -409,15 +409,6 @@ export function usePumpPortal() {
     [newTokens, groupTokensByContent]
   );
 
-  // Memoize migrated groups
-  const migratedGroups = useMemo(
-    () =>
-      groupedTokens.filter((group) =>
-        group.tokens.some((token) => token.migrated)
-      ),
-    [groupedTokens]
-  );
-
   return {
     isConnected,
     newTokens,
@@ -426,6 +417,5 @@ export function usePumpPortal() {
     isPaused,
     togglePause,
     groupedTokens,
-    migratedGroups,
   };
 }

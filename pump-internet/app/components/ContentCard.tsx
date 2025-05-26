@@ -29,20 +29,36 @@ let twitterScriptLoadCallbacks: (() => void)[] = [];
 
 function loadTwitterScriptOnce(callback: () => void) {
   if (twitterScriptLoaded) {
+    console.log("Twitter script already loaded, calling callback");
     callback();
     return;
   }
+
+  console.log("Adding callback to Twitter script loading queue");
   twitterScriptLoadCallbacks.push(callback);
-  if (twitterScriptLoading) return;
+
+  if (twitterScriptLoading) {
+    console.log("Twitter script already loading, waiting...");
+    return;
+  }
+
   twitterScriptLoading = true;
+  console.log("Loading Twitter script...");
+
   const script = document.createElement("script");
   script.src = "https://platform.twitter.com/widgets.js";
   script.async = true;
   script.onload = () => {
+    console.log("Twitter script loaded successfully");
     twitterScriptLoaded = true;
     twitterScriptLoading = false;
+    console.log(`Calling ${twitterScriptLoadCallbacks.length} callbacks`);
     twitterScriptLoadCallbacks.forEach((cb) => cb());
     twitterScriptLoadCallbacks = [];
+  };
+  script.onerror = () => {
+    console.error("Failed to load Twitter script");
+    twitterScriptLoading = false;
   };
   document.head.appendChild(script);
 }
@@ -52,6 +68,7 @@ function getContentInfo(url: string): {
   type: string;
   isEmbeddable: boolean;
   embedUrl?: string;
+  isEmbeddableTweet?: boolean;
 } {
   try {
     const urlObj = new URL(url);
@@ -67,9 +84,14 @@ function getContentInfo(url: string): {
         !pathname.includes("/i/lists/") &&
         !pathname.includes("/i/moments/") &&
         !pathname.includes("/hashtag/") &&
-        !pathname.includes("/search");
+        !pathname.includes("/search") &&
+        !pathname.includes("/photo/");
 
-      return { type: "twitter", isEmbeddable: isActualTweet };
+      return {
+        type: "twitter",
+        isEmbeddable: isActualTweet,
+        isEmbeddableTweet: isActualTweet,
+      };
     }
 
     // YouTube

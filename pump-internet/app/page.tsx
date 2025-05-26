@@ -8,25 +8,37 @@ export default function Home() {
   const {
     isConnected,
     groupedTokens,
-    migratedGroups,
     error,
     isLoading,
     isPaused,
     togglePause,
   } = usePumpPortal();
 
-  // Get a set of all migrated content URLs
-  const migratedUrls = new Set(migratedGroups.map((g) => g.contentUrl));
-  // Only show new tokens for content not in migrated
-  const newOnlyGroups = groupedTokens.filter(
-    (g) => !migratedUrls.has(g.contentUrl)
-  );
+  // Separate tokens into different categories
+  const embeddedTweets = groupedTokens.filter((group) => {
+    return (
+      group.contentType === "twitter" && group.contentUrl.includes("/status/")
+    );
+  });
+
+  const youtubeVideos = groupedTokens.filter((group) => {
+    return group.contentType === "youtube";
+  });
+
+  const otherContent = groupedTokens.filter((group) => {
+    return (
+      group.contentType !== "youtube" &&
+      !(
+        group.contentType === "twitter" && group.contentUrl.includes("/status/")
+      )
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold">Pump Internet</h1>
@@ -89,17 +101,22 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content - Two Columns */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      {/* Main Content - Three Columns */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {isLoading ? (
           <div className="text-center py-20 text-gray-500">
             <p>Loading tokens...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* New Tokens Column */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Embedded Tweets Column */}
             <section>
-              <h2 className="text-xl font-semibold mb-4">New</h2>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                🐦 Embedded Tweets
+                <span className="text-sm font-normal text-gray-500">
+                  ({embeddedTweets.length})
+                </span>
+              </h2>
               {error && (
                 <div className="text-center py-8">
                   <p className="text-red-600 mb-2">Connection Error</p>
@@ -122,22 +139,20 @@ export default function Home() {
               {!isConnected && !error && (
                 <div className="text-center py-20 text-gray-500">
                   <p>Connecting to Pump Fun data...</p>
-                  <p className="text-sm mt-2">
-                    New token launches will appear here
-                  </p>
+                  <p className="text-sm mt-2">Tweet embeds will appear here</p>
                 </div>
               )}
-              {isConnected && newOnlyGroups.length === 0 && !isPaused && (
+              {isConnected && embeddedTweets.length === 0 && !isPaused && (
                 <div className="text-center py-20 text-gray-500">
-                  <p>Waiting for new token launches...</p>
+                  <p>No embedded tweets yet</p>
                   <p className="text-sm mt-2">
-                    Content will appear here as tokens are created
+                    Tweet embeds will appear here as tokens are created
                   </p>
                 </div>
               )}
-              {isConnected && newOnlyGroups.length > 0 && (
+              {isConnected && embeddedTweets.length > 0 && (
                 <div className="space-y-6">
-                  {newOnlyGroups.map((group) => (
+                  {embeddedTweets.map((group) => (
                     <ContentCard
                       key={group.contentUrl}
                       group={group}
@@ -148,19 +163,52 @@ export default function Home() {
               )}
             </section>
 
-            {/* Migrations Column */}
+            {/* YouTube Column */}
             <section>
-              <h2 className="text-xl font-semibold mb-4">Migrations</h2>
-              {migratedGroups.length === 0 ? (
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                📺 YouTube
+                <span className="text-sm font-normal text-gray-500">
+                  ({youtubeVideos.length})
+                </span>
+              </h2>
+              {youtubeVideos.length === 0 ? (
                 <div className="text-center py-20 text-gray-500">
-                  <p>No migrations yet</p>
+                  <p>No YouTube videos yet</p>
                   <p className="text-sm mt-2">
-                    Content will appear here when tokens are migrated
+                    YouTube videos will appear here as tokens are created
                   </p>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {migratedGroups.map((group) => (
+                  {youtubeVideos.map((group) => (
+                    <ContentCard
+                      key={group.contentUrl}
+                      group={group}
+                      isPaused={isPaused}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Other Content Column */}
+            <section>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                🔗 Other
+                <span className="text-sm font-normal text-gray-500">
+                  ({otherContent.length})
+                </span>
+              </h2>
+              {otherContent.length === 0 ? (
+                <div className="text-center py-20 text-gray-500">
+                  <p>No other content yet</p>
+                  <p className="text-sm mt-2">
+                    Other content will appear here as tokens are created
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {otherContent.map((group) => (
                     <ContentCard
                       key={group.contentUrl}
                       group={group}
