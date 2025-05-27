@@ -21,13 +21,14 @@ export default function Home() {
     );
   });
 
-  const youtubeVideos = groupedTokens.filter((group) => {
-    return group.contentType === "youtube";
+  const videoContent = groupedTokens.filter((group) => {
+    return group.contentType === "youtube" || group.contentType === "tiktok";
   });
 
   const otherContent = groupedTokens.filter((group) => {
     return (
       group.contentType !== "youtube" &&
+      group.contentType !== "tiktok" &&
       !(
         group.contentType === "twitter" && group.contentUrl.includes("/status/")
       )
@@ -71,7 +72,7 @@ export default function Home() {
               {isConnected && (
                 <button
                   onClick={togglePause}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] ${
                     isPaused
                       ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25"
                       : "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/25"
@@ -202,35 +203,33 @@ export default function Home() {
               )}
             </section>
 
-            {/* YouTube Column */}
+            {/* Video Content Column */}
             <section className="space-y-6">
               <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-500/10 to-pink-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm">
-                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-lg">📺</span>
+                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg">🎬</span>
                 </div>
-                <h2 className="text-xl font-bold text-white">YouTube</h2>
+                <h2 className="text-xl font-bold text-white">Videos</h2>
                 <div className="px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full">
                   <span className="text-red-400 text-sm font-medium">
-                    {youtubeVideos.length}
+                    {videoContent.length}
                   </span>
                 </div>
               </div>
 
-              {youtubeVideos.length === 0 ? (
+              {videoContent.length === 0 ? (
                 <div className="text-center py-20">
                   <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">📺</span>
+                    <span className="text-2xl">🎬</span>
                   </div>
-                  <p className="text-gray-300 font-medium">
-                    No YouTube videos yet
-                  </p>
+                  <p className="text-gray-300 font-medium">No videos yet</p>
                   <p className="text-gray-500 text-sm mt-2">
-                    YouTube videos will appear here as tokens are created
+                    Videos will appear here as tokens are created
                   </p>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {youtubeVideos.map((group) => (
+                  {videoContent.map((group) => (
                     <ContentCard
                       key={group.contentUrl}
                       group={group}

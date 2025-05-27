@@ -46,7 +46,7 @@ body {
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter;
   transition-timing-function: ease-in-out;
-  transition-duration: 150ms;
+  transition-duration: 200ms;
 }
 
 /* Twitter embed styling */

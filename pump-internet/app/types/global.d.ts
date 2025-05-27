@@ -10,6 +10,11 @@ declare global {
         process: () => void;
       };
     };
+    TikTok?: {
+      embed: {
+        init: () => void;
+      };
+    };
   }
 }
 

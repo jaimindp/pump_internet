@@ -117,7 +117,7 @@ function getContentInfo(url: string): {
 
     // TikTok
     if (hostname.includes("tiktok.com")) {
-      // TikTok video pattern: //@username/video/1234567890
+      // TikTok video pattern: //@username/video/1234567890 (with optional query params)
       const tiktokPattern = /\/@[^\/]+\/video\/\d+/;
       if (tiktokPattern.test(pathname)) {
         return { type: "tiktok", isEmbeddable: true };
@@ -250,6 +250,31 @@ const EmbedContent = memo(function EmbedContent({
       } else {
         window.instgrm.Embeds.process();
       }
+    } else if (embedRef.current && embed.type === "tiktok") {
+      console.log(`Processing TikTok embed for: ${contentUrl}`);
+
+      if (!window.TikTok) {
+        const script = document.createElement("script");
+        script.src = "https://www.tiktok.com/embed.js";
+        script.async = true;
+        script.onload = () => {
+          console.log(`TikTok script loaded for: ${contentUrl}`);
+          if (window.TikTok && window.TikTok.embed) {
+            window.TikTok.embed.init();
+          }
+        };
+        script.onerror = () => {
+          console.error(`Failed to load TikTok script for: ${contentUrl}`);
+        };
+        document.head.appendChild(script);
+      } else {
+        console.log(
+          `TikTok script already loaded, initializing for: ${contentUrl}`
+        );
+        if (window.TikTok.embed) {
+          window.TikTok.embed.init();
+        }
+      }
     }
 
     return () => {
@@ -356,6 +381,26 @@ const ContentCardComponent = function ContentCard({
   const [isLoadingEmbed, setIsLoadingEmbed] = useState(false);
   const hasAttemptedLoad = useRef(false);
   const lastContentUrl = useRef<string>("");
+  const [animationClass, setAnimationClass] = useState("");
+  const hasAnimated = useRef(false);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
+  // Simple animation on first mount
+  useEffect(() => {
+    if (!hasAnimated.current) {
+      // Pick a random animation class on first mount
+      const animations = [
+        "animate-fade-in",
+        "animate-slide-in",
+        "animate-scale-in",
+      ];
+      const random = Math.floor(Math.random() * animations.length);
+      setAnimationClass(animations[random]);
+      hasAnimated.current = true;
+      // Remove the animation class after 300ms for faster, more subtle animations
+      setTimeout(() => setAnimationClass(""), 300);
+    }
+  }, []);
 
   // Debug: Track renders (commented out to reduce clutter)
   // renderCountRef.current += 1;
@@ -458,8 +503,16 @@ const ContentCardComponent = function ContentCard({
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedAddress(text);
+    setTimeout(() => setCopiedAddress(null), 2000);
+  };
+
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden hover:border-gray-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-black/20">
+    <div
+      className={`bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden hover:border-gray-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-black/20 ${animationClass}`}
+    >
       {/* Content Display */}
       <div className="p-6">
         {isLoadingEmbed && (
@@ -533,20 +586,92 @@ const ContentCardComponent = function ContentCard({
                 <span className="text-white text-xs font-bold">$</span>
               </div>
               <div className="min-w-0 flex-1">
-                <a
-                  href={`https://pump.fun/${token.mint}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-white hover:text-blue-400 transition-colors duration-200 text-sm truncate block"
-                  title={`${token.symbol} - ${token.name}`}
-                >
-                  ${token.symbol}
-                </a>
-                {token.volume && token.volume > 0 && (
-                  <p className="text-green-400 text-xs">
-                    ${(token.volume / 1e9).toFixed(1)}M
-                  </p>
-                )}
+                <div className="flex items-center gap-1 mb-1">
+                  <span
+                    className="font-medium text-white text-sm truncate"
+                    title={`${token.symbol} - ${token.name}`}
+                  >
+                    ${token.symbol}
+                  </span>
+                  {token.migrated && (
+                    <span className="px-1 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-400 font-medium">
+                      Migrated
+                    </span>
+                  )}
+                </div>
+
+                {/* Contract Address - Copyable */}
+                <div className="flex items-center gap-1 mb-1 relative">
+                  <button
+                    onClick={() => copyToClipboard(token.mint)}
+                    className="text-gray-400 hover:text-gray-300 text-xs font-mono truncate max-w-[120px] transition-colors duration-200"
+                    title={`Copy CA: ${token.mint}`}
+                  >
+                    {token.mint.slice(0, 8)}...{token.mint.slice(-4)}
+                  </button>
+                  <svg
+                    className="w-3 h-3 text-gray-500 hover:text-gray-400 cursor-pointer"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    onClick={() => copyToClipboard(token.mint)}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                  {/* Toast notification */}
+                  {copiedAddress === token.mint && (
+                    <span className="absolute left-0 -top-8 z-10 px-2 py-1 bg-green-500 text-white text-xs rounded shadow-lg animate-fade-in whitespace-nowrap">
+                      Copied!
+                    </span>
+                  )}
+                </div>
+
+                {/* Links Row */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  {/* Pump.fun Link */}
+                  <a
+                    href={`https://pump.fun/${token.mint}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/30 rounded text-xs text-gray-300 hover:text-white transition-all duration-200"
+                    title="View on Pump.fun"
+                  >
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/en/b/bd/Pump_fun_logo.png"
+                      alt="Pump"
+                      className="w-3 h-3 rounded"
+                    />
+                    Pump
+                  </a>
+
+                  {/* Jupiter Link */}
+                  <a
+                    href={`https://jup.ag/swap/SOL-${token.mint}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/30 rounded text-xs text-gray-300 hover:text-white transition-all duration-200"
+                    title="Trade on Jupiter"
+                  >
+                    <img
+                      src="https://jup.ag/favicon.ico"
+                      alt="Jupiter"
+                      className="w-3 h-3"
+                    />
+                    Jup
+                  </a>
+
+                  {/* Volume Display */}
+                  {token.volume && token.volume > 0 && (
+                    <span className="text-green-400 text-xs font-medium ml-auto">
+                      ${(token.volume / 1e9).toFixed(1)}M
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
